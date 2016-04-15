@@ -31,6 +31,10 @@ We will use this to enforce chromosome ordering in [ggd](https://github.com/goge
 
 It will also be useful for getting your files ready for use in **bedtools**.
 
+# TODO
+
++ Specify a VCF for the genome file and pull order from the @SQ tags
+
 # API Documentation
 
 --
