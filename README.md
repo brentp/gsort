@@ -12,7 +12,7 @@ done
 [Binaries Available Here](https://github.com/brentp/gsort/releases)
 
 
-gsort is a tool to sort genomic files according to a genomefile.
+`gsort` is a tool to sort genomic files according to a genomefile.
 
 For example, for some reason, you may want to sort your VCF to
 have order: `X,Y,2,1,3,...` and you want to **keep the header** at the top.
@@ -31,9 +31,18 @@ We will use this to enforce chromosome ordering in [ggd](https://github.com/goge
 
 It will also be useful for getting your files ready for use in **bedtools**.
 
+# Usage
+
+`gsort` will error if your genome file has 'chr' prefix and your file does not (or vice-versa).
+
+It will write temporary files to your $TMPDIR (usually /tmp/) as needed to avoid using too
+much memory.
+
+
 # TODO
 
 + Specify a VCF for the genome file and pull order from the @SQ tags
++ Make input file chrom naming match the genome? (strip or add chr)? might be for a different tool.
 
 # API Documentation
 

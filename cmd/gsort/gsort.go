@@ -224,7 +224,7 @@ func main() {
 
 	args.Memory = DEFAULT_MEM
 	p := arg.MustParse(&args)
-	fmt.Fprintf(os.Stderr, "> gsort version %s", VERSION)
+	fmt.Fprintf(os.Stderr, "> gsort version %s\n", VERSION)
 	if args.Path == "" || args.Genome == "" {
 		p.Fail("must specify a tab-delimited file and a genome file")
 	}
