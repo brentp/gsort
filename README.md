@@ -9,10 +9,13 @@ for arch in 386 amd64; do
 done
 -->
 
+[Binaries Available Here](https://github.com/brentp/gsort/releases)
+
+
 gsort is a tool to sort genomic files according to a genomefile.
 
-For example, for some reason, you may want to sort your genome to
-have order: `X,Y,2,1,3,...`
+For example, for some reason, you may want to sort your VCF to
+have order: `X,Y,2,1,3,...` and you want to **keep the header** at the top.
 
 
 Given a genome file (lines of chrom\tlength) With this tool, you can
@@ -26,7 +29,7 @@ where memory-use will be limited 1500 megabytes.
 
 We will use this to enforce chromosome ordering in [ggd](https://github.com/gogetdata/ggd).
 
-It will also be useful for getting your files ready for use in bedtools.
+It will also be useful for getting your files ready for use in **bedtools**.
 
 # API Documentation
 
