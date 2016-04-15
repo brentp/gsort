@@ -1,5 +1,7 @@
 # gsort
 
+[![Build Status](https://travis-ci.org/brentp/gsort.svg?branch=master)](https://travis-ci.org/brentp/gsort)
+
 gsort is a tool to sort genomic files according to a genomefile.
 
 For example, for some reason, you may want to sort your genome to
