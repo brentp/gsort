@@ -1,6 +1,13 @@
 # gsort
 
 [![Build Status](https://travis-ci.org/brentp/gsort.svg?branch=master)](https://travis-ci.org/brentp/gsort)
+<!--
+for arch in 386 amd64; do
+	for os in darwin linux windows; do
+		GOOS=$os GOARCH=$arch go build -o gsort_${os}_${arch} cmd/gsort/gsort.go
+	done
+done
+-->
 
 gsort is a tool to sort genomic files according to a genomefile.
 

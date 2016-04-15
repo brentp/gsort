@@ -19,6 +19,8 @@ import (
 
 var DEFAULT_MEM int = 2000
 
+const VERSION = "0.0.1"
+
 var FileCols map[string][]int = map[string][]int{
 	"BED": []int{0, 1, 2},
 	"VCF": []int{0, 1, -1},
@@ -222,6 +224,7 @@ func main() {
 
 	args.Memory = DEFAULT_MEM
 	p := arg.MustParse(&args)
+	fmt.Fprintf(os.Stderr, "> gsort version %s", VERSION)
 	if args.Path == "" || args.Genome == "" {
 		p.Fail("must specify a tab-delimited file and a genome file")
 	}
