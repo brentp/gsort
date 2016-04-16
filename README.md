@@ -17,19 +17,28 @@ done
 For example, for some reason, you may want to sort your VCF to
 have order: `X,Y,2,1,3,...` and you want to **keep the header** at the top.
 
+As a more likely example, you may want to sort your file to match GATK order
+(1 ... X, Y, MT) which is not possible with any other sorting tool. With `gsort`
+one can simply place MT as the last chrom in the .genome file.
+
 
 Given a genome file (lines of chrom\tlength) With this tool, you can
-sort it in that order with:
+sort a BED/VCF/GTF/... in the order dictated by that file with:
 
 ```
 gsort --memory 1500 my.vcf.gz crazy.genome | bgzip -c > my.crazy-order.vcf.gz
 ```
 
-where memory-use will be limited 1500 megabytes.
+where here, memory-use will be limited to 1500 megabytes.
 
 We will use this to enforce chromosome ordering in [ggd](https://github.com/gogetdata/ggd).
 
 It will also be useful for getting your files ready for use in **bedtools**.
+
+# Performance
+
+gsort can sort the 2 million variants in ESP in 15 seconds. It takes a few minutes to sort
+the ~10 million ExAC variants because of the huuuuge INFO strings in that file.
 
 # Usage
 

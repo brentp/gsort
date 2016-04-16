@@ -22,8 +22,14 @@ assert_equal "$(cut -f 3 $STDOUT_FILE | perl -pe 's/\n//')" "1235333555525566856
 
 run check_normal ./gsort_linux_amd64 example/a.bed example/123Y.genome 
 assert_exit_code 0
+exp="1	1	2
+1	4556	5566
+1	7556	8566
+2	4233	5555
+3	1234	1235
+Y	222	333"
 
-assert_equal "$(cut -f 1 $STDOUT_FILE | perl -pe 's/\n//')" "11123Y"
-assert_equal "$(cut -f 2 $STDOUT_FILE | perl -pe 's/\n//')" "14556755642331234222"
+assert_equal "$(cat $STDOUT_FILE)" "$exp"
+
 
 # TODO: vcf
