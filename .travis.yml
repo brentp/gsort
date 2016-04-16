@@ -10,5 +10,5 @@ go:
 
 script:
     - go test
-      #   - ./tests/functional-test.sh
+    - ./functional-test.sh
 

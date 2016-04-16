@@ -19,7 +19,7 @@ import (
 
 var DEFAULT_MEM int = 2000
 
-const VERSION = "0.0.1"
+const VERSION = "0.0.2"
 
 var FileCols map[string][]int = map[string][]int{
 	"BED": []int{0, 1, 2},
