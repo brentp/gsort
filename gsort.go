@@ -313,6 +313,7 @@ func writeChunks(ch chan [][]byte, process Processor) []string {
 			achunk.Cols[i] = process(line)
 		}
 
+		//sort.Stable(&achunk)
 		sort.Sort(&achunk)
 
 		gz, _ := gzip.NewWriterLevel(f, flate.BestSpeed)

@@ -52,6 +52,7 @@ func sortFnFromCols(cols []int, gf *ggd_utils.GenomeFile, getter *func(int, [][]
 	if getter != nil && m < 6 {
 		m = 6
 	}
+	H := 0 // keep order of header
 	fn := func(line []byte) []int {
 		l := make([]int, len(cols))
 		// handle chromosome column
@@ -67,7 +68,8 @@ func sortFnFromCols(cols []int, gf *ggd_utils.GenomeFile, getter *func(int, [][]
 		l[0], ok = gf.Order[string(toks[cols[0]])]
 		if !ok {
 			if hasAnyHeader(string(line)) {
-				return []int{gsort.HEADER_LINE}
+				H += 1
+				return []int{gsort.HEADER_LINE, H}
 			}
 			log.Fatalf("unknown chromosome: %s", toks[cols[0]])
 		}
@@ -117,11 +119,11 @@ func sniff(rdr *bufio.Reader) (string, *bufio.Reader, error) {
 					continue
 				}
 			} else {
-				if hasAnyHeader(string(line)) {
-					continue
-				}
 				toks := strings.Split(line, "\t")
 				if len(toks) < 3 {
+					if hasAnyHeader(string(line)) {
+						continue
+					}
 					return "", nil, fmt.Errorf("file has fewer than 3 columns")
 				}
 				for _, t := range CHECK_ORDER {
@@ -149,6 +151,9 @@ func sniff(rdr *bufio.Reader) (string, *bufio.Reader, error) {
 						ftype = t
 						break
 					}
+				}
+				if hasAnyHeader(string(line)) {
+					continue
 				}
 				if ftype == "" {
 					return "", nil, fmt.Errorf("unknown file format: %s", string(line))
