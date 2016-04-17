@@ -51,7 +51,7 @@ much memory.
 # TODO
 
 + Specify a VCF for the genome file and pull order from the @SQ tags
-+ Make input file chrom naming match the genome? (strip or add chr)? might be for a different tool.
++ Handle 'track' headers in BED files.
 
 # API Documentation
 

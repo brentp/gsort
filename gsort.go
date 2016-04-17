@@ -6,6 +6,9 @@
 // determine ordering. For example if we were sorting on 2 columns, one of months and another of
 // day of months, the function would replace "Jan" with 1 and "Feb" with 2 for the first column
 // and just return the Atoi of the 2nd column.
+//
+// Header lines are assumed to start with '#'. To indicate other lines that are header lines, the
+// user function to Sort() can return `[]int{gsort.HEADER_LINE}`.
 package gsort
 
 import (
@@ -13,6 +16,7 @@ import (
 	"compress/flate"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"os/signal"
 	"path/filepath"
 	"syscall"
@@ -173,6 +177,9 @@ func readLines(ch chan [][]byte, rdr *bufio.Reader, memMb int) {
 	}
 	close(ch)
 }
+
+// indicate that this is a header line, even if it doesn't have '#' prefix
+const HEADER_LINE = math.MinInt32
 
 func writeHeader(wtr *bufio.Writer, rdr *bufio.Reader) error {
 	for {

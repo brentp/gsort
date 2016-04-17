@@ -66,6 +66,9 @@ func sortFnFromCols(cols []int, gf *ggd_utils.GenomeFile, getter *func(int, [][]
 		// TODO: use unsafe string
 		l[0], ok = gf.Order[string(toks[cols[0]])]
 		if !ok {
+			if hasAnyHeader(string(line)) {
+				return []int{gsort.HEADER_LINE}
+			}
 			log.Fatalf("unknown chromosome: %s", toks[cols[0]])
 		}
 		for k, col := range cols[1:] {
@@ -88,6 +91,17 @@ func sortFnFromCols(cols []int, gf *ggd_utils.GenomeFile, getter *func(int, [][]
 	return fn
 }
 
+var allowedHeaders []string = []string{"browser", "track"}
+
+func hasAnyHeader(line string) bool {
+	for _, a := range allowedHeaders {
+		if strings.HasPrefix(line, a) {
+			return true
+		}
+	}
+	return false
+}
+
 func sniff(rdr *bufio.Reader) (string, *bufio.Reader, error) {
 	lines := make([]string, 0, 200)
 	var ftype string
@@ -103,6 +117,9 @@ func sniff(rdr *bufio.Reader) (string, *bufio.Reader, error) {
 					continue
 				}
 			} else {
+				if hasAnyHeader(string(line)) {
+					continue
+				}
 				toks := strings.Split(line, "\t")
 				if len(toks) < 3 {
 					return "", nil, fmt.Errorf("file has fewer than 3 columns")
