@@ -51,7 +51,7 @@ much memory.
 # TODO
 
 + Specify a VCF for the genome file and pull order from the @SQ tags
-+ Handle 'track' headers in BED files.
++ Avoid temp file when everything can fit in memory. (more universally, last chunk can always be kept in memory).
 
 # API Documentation
 
