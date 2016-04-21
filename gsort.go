@@ -19,6 +19,7 @@ import (
 	"math"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -29,7 +30,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"runtime"
 	"sort"
 )
 
@@ -117,7 +117,7 @@ func Sort(rdr io.Reader, wtr io.Writer, preprocess Processor, memMB int) error {
 	if err != nil {
 		return err
 	}
-	ch := make(chan [][]byte, runtime.GOMAXPROCS(-1))
+	ch := make(chan [][]byte, 0)
 	go readLines(ch, brdr, memMB)
 	fileNames := writeChunks(ch, preprocess)
 
@@ -134,12 +134,9 @@ func Sort(rdr io.Reader, wtr io.Writer, preprocess Processor, memMB int) error {
 
 func readLines(ch chan [][]byte, rdr *bufio.Reader, memMb int) {
 
-	n := runtime.GOMAXPROCS(-1) - 1
-	if n == 1 {
-		n = 2
-	}
+	n := 2
 
-	mem := 1000000 * memMb / (n - 1)
+	mem := 1000000 * memMb / n
 
 	lines := make([][]byte, 0, 500)
 	var line []byte
@@ -312,19 +309,25 @@ func writeChunks(ch chan [][]byte, process Processor) []string {
 		for i, line := range achunk.lines {
 			achunk.Cols[i] = process(line)
 		}
+		//lines = nil
 
 		//sort.Stable(&achunk)
 		sort.Sort(&achunk)
 
 		gz, _ := gzip.NewWriterLevel(f, flate.BestSpeed)
 		wtr := bufio.NewWriterSize(gz, 65536)
-		for _, line := range achunk.lines {
+		for i, line := range achunk.lines {
 			wtr.Write(line)
+			achunk.lines[i] = nil
+			lines[i] = nil
 		}
 		wtr.Flush()
+		achunk.Cols, lines = nil, nil
+		achunk.lines = nil
 		gz.Close()
 		f.Close()
 		fileNames = append(fileNames, f.Name())
 	}
+	runtime.GC()
 	return fileNames
 }
