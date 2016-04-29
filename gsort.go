@@ -117,7 +117,7 @@ func Sort(rdr io.Reader, wtr io.Writer, preprocess Processor, memMB int) error {
 	if err != nil {
 		return err
 	}
-	ch := make(chan [][]byte, 0)
+	ch := make(chan [][]byte)
 	go readLines(ch, brdr, memMB)
 	fileNames := writeChunks(ch, preprocess)
 
@@ -134,15 +134,14 @@ func Sort(rdr io.Reader, wtr io.Writer, preprocess Processor, memMB int) error {
 
 func readLines(ch chan [][]byte, rdr *bufio.Reader, memMb int) {
 
-	n := 2
+	mem := int(1000000.0 * float64(memMb) * 0.7)
 
-	mem := 1000000 * memMb / n
-
-	lines := make([][]byte, 0, 500)
+	lines := make([][]byte, 0, 500000)
 	var line []byte
 	var err error
 
 	sum := 0
+	k := 0
 
 	for {
 
@@ -168,7 +167,12 @@ func readLines(ch chan [][]byte, rdr *bufio.Reader, memMb int) {
 
 		if sum >= mem {
 			ch <- lines
-			lines = make([][]byte, 0, 500)
+			lines = make([][]byte, 0, 500000)
+			if k == 0 {
+				ch <- make([][]byte, 0, 0)
+				mem /= 3
+			}
+			k++
 			sum = 0
 		}
 	}
@@ -301,6 +305,9 @@ func writeChunks(ch chan [][]byte, process Processor) []string {
 	fileNames := make([]string, 0, 20)
 	pid := os.Getpid()
 	for lines := range ch {
+		if len(lines) == 0 {
+			continue
+		}
 		f, err := ioutil.TempFile("", fmt.Sprintf("gsort.%d.%d.", pid, len(fileNames)))
 		if err != nil {
 			log.Fatal(err)

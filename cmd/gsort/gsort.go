@@ -17,9 +17,9 @@ import (
 	"github.com/gogetdata/ggd-utils"
 )
 
-var DEFAULT_MEM int = 2000
+var DEFAULT_MEM int = 1300
 
-const VERSION = "0.0.2"
+const VERSION = "0.0.3"
 
 var FileCols map[string][]int = map[string][]int{
 	"BED": []int{0, 1, 2},
@@ -40,8 +40,29 @@ func unsafeString(b []byte) string {
 	return *(*string)(unsafe.Pointer(&b))
 }
 
+// get the start and end of a column given the index
+func getAt(line []byte, idx int) (int, int) {
+	if idx == 0 {
+		return 0, bytes.IndexRune(line, '\t')
+	}
+	off := 0
+	for i := 0; i < idx; i++ {
+		off += 1 + bytes.IndexRune(line[off:], '\t')
+	}
+	e := bytes.IndexRune(line[off:], '\t')
+	if e == -1 {
+		e = len(line)
+		for line[e-1] == '\n' || line[e-1] == '\r' {
+			e -= 1
+		}
+	} else {
+		e = off + e
+	}
+	return off, e
+}
+
 // the last function is used when a column is -1
-func sortFnFromCols(cols []int, gf *ggd_utils.GenomeFile, getter *func(int, [][]byte) int) func([]byte) []int {
+func sortFnFromCols(cols []int, gf *ggd_utils.GenomeFile, getter *func(int, []byte) int) func([]byte) []int {
 	m := 0
 	for _, c := range cols {
 		if c > m {
@@ -55,33 +76,28 @@ func sortFnFromCols(cols []int, gf *ggd_utils.GenomeFile, getter *func(int, [][]
 	H := 0 // keep order of header
 	fn := func(line []byte) []int {
 		l := make([]int, len(cols))
-		// handle chromosome column
-		toks := bytes.SplitN(line, []byte{'\t'}, m)
-		// TODO: only do this when needed.
-		// avoids problems with Atoi('222\n')
-		end := toks[len(toks)-1]
-		for end[len(end)-1] == '\n' || end[len(end)-1] == '\r' {
-			end = end[:len(end)-1]
-		}
+		s, e := getAt(line, cols[0])
 		var ok bool
-		// TODO: use unsafe string
-		l[0], ok = gf.Order[string(toks[cols[0]])]
+		if s < 0 || e < 0 {
+			ok = false
+		} else {
+			l[0], ok = gf.Order[string(line[s:e])]
+		}
 		if !ok {
 			if hasAnyHeader(string(line)) {
 				H += 1
 				return []int{gsort.HEADER_LINE, H}
 			}
-			log.Fatalf("unknown chromosome: %s", toks[cols[0]])
+			log.Fatalf("unknown chromosome: %s", line[s:e])
 		}
 		for k, col := range cols[1:] {
 			i := k + 1
 			if col == -1 {
-				l[i] = (*getter)(l[i-1], toks)
+				l[i] = (*getter)(l[i-1], line)
 			} else {
-				if col == len(toks)-1 {
-					toks[col] = bytes.TrimRight(toks[col], "\r\n")
-				}
-				v, err := strconv.Atoi(unsafeString(toks[col]))
+				s, e := getAt(line, col)
+				subset := line[s:e]
+				v, err := strconv.Atoi(unsafeString(subset))
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -204,19 +220,18 @@ func getMax(i []byte) (int, error) {
 	return max, nil
 }
 
-var vcfEndGetter func(int, [][]byte) int = func(start int, toks [][]byte) int {
-	if bytes.Contains(toks[4], []byte{'<'}) && (bytes.Contains(toks[4], []byte("<DEL")) ||
-		bytes.Contains(toks[4], []byte("<DUP")) ||
-		bytes.Contains(toks[4], []byte("<INV")) ||
-		bytes.Contains(toks[4], []byte("<CN"))) {
+var vcfEndGetter func(int, []byte) int = func(start int, line []byte) int {
+
+	col4s, col4e := getAt(line, 4)
+	col4 := line[col4s:col4e]
+	if bytes.Contains(col4, []byte{'<'}) && (bytes.Contains(col4, []byte("<DEL")) ||
+		bytes.Contains(col4, []byte("<DUP")) ||
+		bytes.Contains(col4, []byte("<INV")) ||
+		bytes.Contains(col4, []byte("<CN"))) {
 		// need to look at INFO for this.
-		var info []byte
-		if len(toks) < 8 {
-			// just grab everything since we look for end= anyway
-			info = toks[len(toks)-1]
-		} else {
-			info = toks[7]
-		}
+
+		is, ie := getAt(line, 8)
+		info := line[is:ie]
 		if s, e := find([]byte("END="), info); s != -1 {
 			end, err := getMax(info[s:e])
 			if err != nil {
@@ -227,7 +242,8 @@ var vcfEndGetter func(int, [][]byte) int = func(start int, toks [][]byte) int {
 		s, e := find([]byte("SVLEN="), info)
 		if s == -1 {
 			log.Printf("warning: cant find end for %s", string(info))
-			return start + len(toks[3])
+			s3, e3 := getAt(line, 3)
+			return start + e3 - s3
 		}
 		svlen, err := getMax(info[s:e])
 		if err != nil {
@@ -237,7 +253,8 @@ var vcfEndGetter func(int, [][]byte) int = func(start int, toks [][]byte) int {
 
 	} else {
 		// length of reference.
-		return start + len(toks[3])
+		s3, e3 := getAt(line, 3)
+		return start + e3 - s3
 	}
 
 }
