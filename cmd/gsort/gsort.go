@@ -17,9 +17,11 @@ import (
 	"github.com/gogetdata/ggd-utils"
 )
 
-var DEFAULT_MEM int = 1300
+// DEFAULT_MEM is the number of megabytes of mem to use.
+var DEFAULT_MEM = 1300
 
-const VERSION = "0.0.3"
+// VERSION is the program version number
+const VERSION = "0.0.4"
 
 var FileCols map[string][]int = map[string][]int{
 	"BED": []int{0, 1, 2},
@@ -53,7 +55,7 @@ func getAt(line []byte, idx int) (int, int) {
 	if e == -1 {
 		e = len(line)
 		for line[e-1] == '\n' || line[e-1] == '\r' {
-			e -= 1
+			e--
 		}
 	} else {
 		e = off + e
@@ -85,7 +87,7 @@ func sortFnFromCols(cols []int, gf *ggd_utils.GenomeFile, getter *func(int, []by
 		}
 		if !ok {
 			if hasAnyHeader(string(line)) {
-				H += 1
+				H++
 				return []int{gsort.HEADER_LINE, H}
 			}
 			log.Fatalf("unknown chromosome: %s", line[s:e])
@@ -109,7 +111,7 @@ func sortFnFromCols(cols []int, gf *ggd_utils.GenomeFile, getter *func(int, []by
 	return fn
 }
 
-var allowedHeaders []string = []string{"browser", "track"}
+var allowedHeaders = []string{"browser", "track"}
 
 func hasAnyHeader(line string) bool {
 	for _, a := range allowedHeaders {
@@ -173,9 +175,8 @@ func sniff(rdr *bufio.Reader) (string, *bufio.Reader, error) {
 				}
 				if ftype == "" {
 					return "", nil, fmt.Errorf("unknown file format: %s", string(line))
-				} else {
-					break
 				}
+				break
 			}
 		}
 		if err != nil {
@@ -220,7 +221,7 @@ func getMax(i []byte) (int, error) {
 	return max, nil
 }
 
-var vcfEndGetter func(int, []byte) int = func(start int, line []byte) int {
+var vcfEndGetter = func(start int, line []byte) int {
 
 	col4s, col4e := getAt(line, 4)
 	col4 := line[col4s:col4e]
@@ -251,11 +252,10 @@ var vcfEndGetter func(int, []byte) int = func(start int, line []byte) int {
 		}
 		return start + svlen
 
-	} else {
-		// length of reference.
-		s3, e3 := getAt(line, 3)
-		return start + e3 - s3
 	}
+	// length of reference.
+	s3, e3 := getAt(line, 3)
+	return start + e3 - s3
 
 }
 
