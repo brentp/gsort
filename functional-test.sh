@@ -10,7 +10,7 @@ go build -o ./gsort_linux_amd64 cmd/gsort/gsort.go
 
 run check_usage ./gsort_linux_amd64
 assert_exit_code 255
-assert_in_stderr "usage"
+assert_in_stderr "Usage"
 
 run check_funky ./gsort_linux_amd64 example/a.bed example/3Y21.genome 
 assert_exit_code 0
