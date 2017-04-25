@@ -21,7 +21,7 @@ import (
 var DEFAULT_MEM = 1300
 
 // VERSION is the program version number
-const VERSION = "0.0.4"
+const VERSION = "0.0.5"
 
 var FileCols map[string][]int = map[string][]int{
 	"BED": []int{0, 1, 2},
@@ -90,7 +90,7 @@ func sortFnFromCols(cols []int, gf *ggd_utils.GenomeFile, getter *func(int, []by
 				H++
 				return []int{gsort.HEADER_LINE, H}
 			}
-			log.Fatalf("unknown chromosome: %s", line[s:e])
+			log.Fatalf("unknown chromosome: %s (known: %v)", line[s:e], gf.Order)
 		}
 		for k, col := range cols[1:] {
 			i := k + 1
@@ -231,7 +231,7 @@ var vcfEndGetter = func(start int, line []byte) int {
 		bytes.Contains(col4, []byte("<CN"))) {
 		// need to look at INFO for this.
 
-		is, ie := getAt(line, 8)
+		is, ie := getAt(line, 7)
 		info := line[is:ie]
 		if s, e := find([]byte("END="), info); s != -1 {
 			end, err := getMax(info[s:e])
@@ -242,7 +242,7 @@ var vcfEndGetter = func(start int, line []byte) int {
 		}
 		s, e := find([]byte("SVLEN="), info)
 		if s == -1 {
-			log.Printf("warning: cant find end for %s", string(info))
+			log.Printf("warning: cant find end for %s", string(line))
 			s3, e3 := getAt(line, 3)
 			return start + e3 - s3
 		}

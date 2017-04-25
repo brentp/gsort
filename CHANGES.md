@@ -1,3 +1,8 @@
+0.0.5
+=====
+
++ fix bug with finding END for svs.
+
 0.0.3
 =====
 
