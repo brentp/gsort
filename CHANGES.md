@@ -1,3 +1,7 @@
+0.0.6
+=====
++ allow sorting GFF with respect to parent so that of elements with the same start, the parent will always come first.
+
 0.0.5
 =====
 

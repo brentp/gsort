@@ -34,6 +34,12 @@ We will use this to enforce chromosome ordering in [ggd](https://github.com/goge
 
 It will also be useful for getting your files ready for use in **bedtools**.
 
+# GFF parent
+
+In GFF, the `Parent` attribute may refer to a row that would otherwise be sorted after it (based on the end position).
+But, some programs require that the row referenced in a `Parent` attribute be sorted first. If this is required, used
+the `--parent` flag introduced in version 0.0.6.
+
 # Performance
 
 gsort can sort the 2 million variants in ESP in 15 seconds. It takes a few minutes to sort

@@ -48,4 +48,24 @@ Y	127471196	127472363	Pos1	0	+	127471196	127472363	255,0,0
 Y	127472363	127473530	Pos2	0	+	127472363	127473530	255,0,0"
 assert_equal "$(cat $STDOUT_FILE)" "$exp"
 
-# TODO: vcf
+
+run check_gff_parent ./gsort_linux_amd64 --parent test.gff test.gff.genome
+assert_exit_code 0
+exp="##gff-version 3
+##sequence-region   CHROM1 1 20386
+###
+###
+CHROM1	Cufflinks	mRNA	1473	16154	.	-	.	ID=XLOC_228.2;description=228
+CHROM1	Cufflinks	mRNA	1473	16386	.	-	.	ID=XLOC_228.3
+CHROM1	Cufflinks	exon	1473	1814	.	-	.	Parent=XLOC_228.2
+CHROM1	Cufflinks	exon	1473	12024	.	-	.	Parent=XLOC_228.3
+CHROM1	Cufflinks	exon	11626	12574	.	-	.	Parent=XLOC_228.2
+CHROM1	Cufflinks	exon	12615	12721	.	-	.	Parent=XLOC_228.3
+CHROM1	Cufflinks	exon	12695	12721	.	-	.	Parent=XLOC_228.2
+CHROM1	Cufflinks	exon	13637	13726	.	-	.	Parent=XLOC_228.2
+CHROM1	Cufflinks	exon	13637	13726	.	-	.	Parent=XLOC_228.3
+CHROM1	Cufflinks	exon	15329	15408	.	-	.	Parent=XLOC_228.2
+CHROM1	Cufflinks	exon	15329	16386	.	-	.	Parent=XLOC_228.3
+CHROM1	Cufflinks	exon	15994	16154	.	-	.	Parent=XLOC_228.2"
+
+assert_equal "$(cat $STDOUT_FILE)" "$exp"

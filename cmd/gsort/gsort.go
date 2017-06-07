@@ -227,14 +227,6 @@ func getMax(i []byte) (int, error) {
 
 type endGetter func(start int, line []byte) int
 
-var gtfExtraGetter = endGetter(func(start int, line []byte) int {
-	// want parent lines to come first. so lines containing a parent come last.
-	if bytes.Contains(line, []byte("Parent=")) {
-		return 1
-	}
-	return 0
-})
-
 var vcfEndGetter = endGetter(func(start int, line []byte) int {
 
 	col4s, col4e := getAt(line, 4)
@@ -302,7 +294,39 @@ func main() {
 	if ftype == "VCF" {
 		getter = vcfEndGetter
 	} else if args.Parent && (ftype == "GFF" || ftype == "GTF") {
-		getter = gtfExtraGetter
+
+		seen := make(map[string]int, 20)
+		cnt := 2
+		getter = endGetter(func(start int, line []byte) int {
+			ix := bytes.Index(line, []byte("\tID="))
+			if ix == -1 {
+				ix = bytes.Index(line, []byte(";ID="))
+			}
+			if ix != -1 {
+				ix += 4
+				ixEnd := bytes.IndexByte(line[ix:], ';')
+				if ixEnd == -1 {
+					seen[string(line[ix:len(line)-1])] = cnt
+				} else {
+					seen[string(line[ix:ix+ixEnd])] = cnt
+				}
+				cnt++
+			}
+			// want parent lines to come first. so lines containing a parent come last.
+
+			if ix := bytes.Index(line, []byte("Parent=")); ix != -1 {
+				ix += 7
+				ie := bytes.IndexByte(line[ix:], ';')
+				if ie == -1 {
+					ie = len(line) - 1 - ix
+				}
+				if o, ok := seen[string(line[ix:ix+ie])]; ok {
+					return o
+				}
+				return 1
+			}
+			return 0
+		})
 	} else if ftype == "GFF" || ftype == "GTF" {
 		FileCols[ftype] = []int{0, 3, 4}
 	}
