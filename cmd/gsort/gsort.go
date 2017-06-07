@@ -21,13 +21,13 @@ import (
 var DEFAULT_MEM = 1300
 
 // VERSION is the program version number
-const VERSION = "0.0.5"
+const VERSION = "0.0.6"
 
 var FileCols map[string][]int = map[string][]int{
 	"BED": []int{0, 1, 2},
 	"VCF": []int{0, 1, -1},
-	"GFF": []int{0, 3, 4},
-	"GTF": []int{0, 3, 4},
+	"GFF": []int{0, 3, -1, 4},
+	"GTF": []int{0, 3, -1, 4},
 }
 
 var CHECK_ORDER = []string{"BED", "GTF"}
@@ -36,6 +36,7 @@ var args struct {
 	Path   string `arg:"positional,help:a tab-delimited file to sort"`
 	Genome string `arg:"positional,help:a genome file of chromosome sizes and order"`
 	Memory int    `arg:"-m,help:megabytes of memory to use before writing to temp files."`
+	Parent bool   `arg:"-p,help:for gff only. given rows with same chrom and start put those with a 'Parent' attribute first"`
 }
 
 func unsafeString(b []byte) string {
@@ -64,7 +65,7 @@ func getAt(line []byte, idx int) (int, int) {
 }
 
 // the last function is used when a column is -1
-func sortFnFromCols(cols []int, gf *ggd_utils.GenomeFile, getter *func(int, []byte) int) func([]byte) []int {
+func sortFnFromCols(cols []int, gf *ggd_utils.GenomeFile, getter endGetter) func([]byte) []int {
 	m := 0
 	for _, c := range cols {
 		if c > m {
@@ -86,7 +87,7 @@ func sortFnFromCols(cols []int, gf *ggd_utils.GenomeFile, getter *func(int, []by
 			l[0], ok = gf.Order[string(line[s:e])]
 		}
 		if !ok {
-			if hasAnyHeader(string(line)) {
+			if line[0] == '#' || hasAnyHeader(string(line)) {
 				H++
 				return []int{gsort.HEADER_LINE, H}
 			}
@@ -95,7 +96,7 @@ func sortFnFromCols(cols []int, gf *ggd_utils.GenomeFile, getter *func(int, []by
 		for k, col := range cols[1:] {
 			i := k + 1
 			if col == -1 {
-				l[i] = (*getter)(l[i-1], line)
+				l[i] = getter(l[i-1], line)
 			} else {
 				s, e := getAt(line, col)
 				subset := line[s:e]
@@ -149,6 +150,9 @@ func sniff(rdr *bufio.Reader) (string, *bufio.Reader, error) {
 					ok := true
 					last := 0
 					for _, c := range cols[1:] {
+						if c == -1 {
+							continue
+						}
 						if c >= len(toks) {
 							ok = false
 							break
@@ -221,7 +225,17 @@ func getMax(i []byte) (int, error) {
 	return max, nil
 }
 
-var vcfEndGetter = func(start int, line []byte) int {
+type endGetter func(start int, line []byte) int
+
+var gtfExtraGetter = endGetter(func(start int, line []byte) int {
+	// want parent lines to come first. so lines containing a parent come last.
+	if bytes.Contains(line, []byte("Parent=")) {
+		return 1
+	}
+	return 0
+})
+
+var vcfEndGetter = endGetter(func(start int, line []byte) int {
 
 	col4s, col4e := getAt(line, 4)
 	col4 := line[col4s:col4e]
@@ -257,7 +271,7 @@ var vcfEndGetter = func(start int, line []byte) int {
 	s3, e3 := getAt(line, 3)
 	return start + e3 - s3
 
-}
+})
 
 func main() {
 
@@ -283,10 +297,14 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	var getter endGetter
 
-	getter := &vcfEndGetter
-	if ftype != "VCF" {
-		getter = nil
+	if ftype == "VCF" {
+		getter = vcfEndGetter
+	} else if args.Parent && (ftype == "GFF" || ftype == "GTF") {
+		getter = gtfExtraGetter
+	} else if ftype == "GFF" || ftype == "GTF" {
+		FileCols[ftype] = []int{0, 3, 4}
 	}
 
 	sortFn := sortFnFromCols(FileCols[ftype], gf, getter)
