@@ -24,6 +24,7 @@ import (
 	"time"
 
 	gzip "github.com/klauspost/compress/gzip"
+	"github.com/pkg/errors"
 	//gzip "github.com/klauspost/pgzip"
 
 	"container/heap"
@@ -113,10 +114,12 @@ func Sort(rdr io.Reader, wtr io.Writer, preprocess Processor, memMB int) error {
 	brdr, bwtr := bufio.NewReader(rdr), bufio.NewWriter(wtr)
 	defer bwtr.Flush()
 
-	err := writeHeader(bwtr, brdr)
-	if err != nil {
-		return err
+	if err := writeHeader(bwtr, brdr); err == io.EOF {
+		return nil
+	} else if err != nil {
+		return errors.Wrap(err, "error reading/writing header")
 	}
+
 	ch := make(chan [][]byte)
 	go readLines(ch, brdr, memMB)
 	fileNames := writeChunks(ch, preprocess)
@@ -186,7 +189,7 @@ func writeHeader(wtr *bufio.Writer, rdr *bufio.Reader) error {
 	for {
 		b, err := rdr.Peek(1)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "error peaking for header")
 		}
 		if b[0] != '#' {
 			break
@@ -208,11 +211,14 @@ func writeOne(fname string, wtr io.Writer) error {
 	}
 	defer rdr.Close()
 	gz, err := gzip.NewReader(rdr)
+	if err == io.EOF {
+		return nil
+	}
 	if err != nil {
 		return err
 	}
 	_, err = io.Copy(wtr, gz)
-	return err
+	return errors.Wrapf(err, "error copying from %s", fname)
 }
 
 func merge(fileNames []string, wtr io.Writer, process Processor) error {
@@ -228,13 +234,13 @@ func merge(fileNames []string, wtr io.Writer, process Processor) error {
 	for i, fn := range fileNames {
 		fh, err := os.Open(fn)
 		if err != nil {
-			return err
+			return errors.Wrap(err, fmt.Sprintf("error opening: %s", fn))
 		}
 		defer fh.Close()
 		//gz, err := newFastGzReader(fh)
 		gz, err := gzip.NewReader(fh)
 		if err != nil {
-			return err
+			return errors.Wrap(err, fmt.Sprintf("error reading %s as gzip", fn))
 		}
 		defer gz.Close()
 		fhs[i] = bufio.NewReader(gz)

@@ -21,7 +21,7 @@ import (
 var DEFAULT_MEM = 1300
 
 // VERSION is the program version number
-const VERSION = "0.0.6"
+const VERSION = "0.0.7"
 
 var FileCols map[string][]int = map[string][]int{
 	"BED": []int{0, 1, 2},
@@ -275,18 +275,22 @@ func main() {
 	}
 
 	rdr, err := xopen.Ropen(args.Path)
+	if err == io.EOF {
+		log.Println("gsort: empty file")
+		os.Exit(0)
+	}
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rdr.Close()
 
 	ftype, brdr, err := sniff(rdr.Reader)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		log.Fatal(err)
 	}
 
 	gf, err := ggd_utils.ReadGenomeFile(args.Genome)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		log.Fatal(err)
 	}
 	var getter endGetter
@@ -335,6 +339,6 @@ func main() {
 	wtr := bufio.NewWriter(os.Stdout)
 
 	if err := gsort.Sort(brdr, wtr, sortFn, args.Memory); err != nil {
-		log.Fatal(err)
+		log.Fatal("error from gsort.Sort", err)
 	}
 }
