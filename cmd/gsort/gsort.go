@@ -33,11 +33,11 @@ var FileCols map[string][]int = map[string][]int{
 var CHECK_ORDER = []string{"BED", "GTF"}
 
 var args struct {
-	Path              string `arg:"positional,help:a tab-delimited file to sort"`
-	Genome            string `arg:"positional,help:a genome file of chromosome sizes and order"`
-	ChromosomMappings string `arg:"-c,help:a file used to re-map chromosome names for example from hg19 to GRCh37"`
-	Memory            int    `arg:"-m,help:megabytes of memory to use before writing to temp files."`
-	Parent            bool   `arg:"-p,help:for gff only. given rows with same chrom and start put those with a 'Parent' attribute first"`
+	Path               string `arg:"positional,help:a tab-delimited file to sort"`
+	Genome             string `arg:"positional,help:a genome file of chromosome sizes and order"`
+	ChromosomeMappings string `arg:"-c,help:a file used to re-map chromosome names for example from hg19 to GRCh37"`
+	Memory             int    `arg:"-m,help:megabytes of memory to use before writing to temp files."`
+	Parent             bool   `arg:"-p,help:for gff only. given rows with same chrom and start put those with a 'Parent' attribute first"`
 }
 
 func unsafeString(b []byte) string {
@@ -326,7 +326,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	gf, err := ggd_utils.ReadGenomeFile(args.Genome, args.ChromosomMappings)
+	gf, err := ggd_utils.ReadGenomeFile(args.Genome, args.ChromosomeMappings)
 
 	if err != nil && err != io.EOF {
 		log.Fatal(err)
