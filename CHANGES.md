@@ -1,3 +1,7 @@
+0.1.0
+=====
++ add --chromosomMappings to re-map chromosome names for example from hg19 to GRCh37
+
 0.0.6
 =====
 + allow sorting GFF with respect to parent so that of elements with the same start, the parent will always come first.

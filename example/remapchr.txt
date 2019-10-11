@@ -1,0 +1,4 @@
+chr1	1
+chr2	2
+chr3	3
+chrY	Y

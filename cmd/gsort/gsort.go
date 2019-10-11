@@ -14,14 +14,14 @@ import (
 	"github.com/alexflint/go-arg"
 	"github.com/brentp/gsort"
 	"github.com/brentp/xopen"
-	"github.com/gogetdata/ggd-utils"
+	ggd_utils "github.com/gogetdata/ggd-utils"
 )
 
 // DEFAULT_MEM is the number of megabytes of mem to use.
-var DEFAULT_MEM = 1300
+var DEFAULT_MEM = 1800
 
 // VERSION is the program version number
-const VERSION = "0.0.7"
+const VERSION = "0.1.0"
 
 var FileCols map[string][]int = map[string][]int{
 	"BED": []int{0, 1, 2},
@@ -33,10 +33,11 @@ var FileCols map[string][]int = map[string][]int{
 var CHECK_ORDER = []string{"BED", "GTF"}
 
 var args struct {
-	Path   string `arg:"positional,help:a tab-delimited file to sort"`
-	Genome string `arg:"positional,help:a genome file of chromosome sizes and order"`
-	Memory int    `arg:"-m,help:megabytes of memory to use before writing to temp files."`
-	Parent bool   `arg:"-p,help:for gff only. given rows with same chrom and start put those with a 'Parent' attribute first"`
+	Path              string `arg:"positional,help:a tab-delimited file to sort"`
+	Genome            string `arg:"positional,help:a genome file of chromosome sizes and order"`
+	ChromosomMappings string `arg:"-c,help:a file used to re-map chromosome names for example from hg19 to GRCh37"`
+	Memory            int    `arg:"-m,help:megabytes of memory to use before writing to temp files."`
+	Parent            bool   `arg:"-p,help:for gff only. given rows with same chrom and start put those with a 'Parent' attribute first"`
 }
 
 func unsafeString(b []byte) string {
@@ -84,7 +85,16 @@ func sortFnFromCols(cols []int, gf *ggd_utils.GenomeFile, getter endGetter) func
 		if s < 0 || e < 0 {
 			ok = false
 		} else {
-			l[0], ok = gf.Order[string(line[s:e])]
+			chrom := string(line[s:e])
+			if gf.ReMap != nil && len(gf.ReMap) > 0 {
+				newchrom, ok := gf.ReMap[chrom]
+				if !ok {
+					log.Printf("[gsort] warning! no mapping given for chromosome: %s", chrom)
+				} else {
+					chrom = newchrom
+				}
+			}
+			l[0], ok = gf.Order[chrom]
 		}
 		if !ok {
 			if line[0] == '#' || hasAnyHeader(string(line)) {
@@ -265,6 +275,33 @@ var vcfEndGetter = endGetter(func(start int, line []byte) int {
 
 })
 
+// remap chromosome names.
+func remap(gf *ggd_utils.GenomeFile, mappings map[string]string) {
+
+	if mappings == nil || len(mappings) == 0 {
+		return
+	}
+
+	chroms := make([]string, 0, len(gf.Lengths))
+	for chrom := range gf.Lengths {
+		if _, ok := mappings[chrom]; !ok {
+			log.Printf("[gsort] WARNING! %s not found in chromosome mappings", chrom)
+		} else {
+			chroms = append(chroms, chrom)
+		}
+	}
+	for _, chrom := range chroms {
+		if chrom != mappings[chrom] {
+			gf.Lengths[mappings[chrom]] = gf.Lengths[chrom]
+			gf.Lengths[mappings[chrom]] = gf.Order[chrom]
+			delete(gf.Lengths, chrom)
+			delete(gf.Order, chrom)
+		}
+
+	}
+
+}
+
 func main() {
 
 	args.Memory = DEFAULT_MEM
@@ -289,7 +326,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	gf, err := ggd_utils.ReadGenomeFile(args.Genome)
+	gf, err := ggd_utils.ReadGenomeFile(args.Genome, args.ChromosomMappings)
+
 	if err != nil && err != io.EOF {
 		log.Fatal(err)
 	}
@@ -338,7 +376,7 @@ func main() {
 	sortFn := sortFnFromCols(FileCols[ftype], gf, getter)
 	wtr := bufio.NewWriter(os.Stdout)
 
-	if err := gsort.Sort(brdr, wtr, sortFn, args.Memory); err != nil {
+	if err := gsort.Sort(brdr, wtr, sortFn, args.Memory, gf.ReMap); err != nil {
 		log.Fatal("error from gsort.Sort", err)
 	}
 }

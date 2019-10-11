@@ -19,6 +19,8 @@ assert_equal "$(cut -f 1 $STDOUT_FILE | perl -pe 's/\n//')" "3Y2111"
 assert_equal "$(cut -f 2 $STDOUT_FILE | perl -pe 's/\n//')" "12342224233145567556"
 assert_equal "$(cut -f 3 $STDOUT_FILE | perl -pe 's/\n//')" "12353335555255668566"
 
+run check_funky_with_remap ./gsort_linux_amd64 -c example/remapchr.txt example/chra.bed example/3Y21.genome 
+assert_equal "$(cut -f 1 $STDOUT_FILE | perl -pe 's/\n//')" "3Y2111"
 
 run check_normal ./gsort_linux_amd64 example/a.bed example/123Y.genome 
 assert_exit_code 0
