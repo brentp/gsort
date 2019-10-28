@@ -46,7 +46,7 @@ a	3
 	b := make([]byte, 0, 20)
 	wtr := bytes.NewBuffer(b)
 
-	err := gsort.Sort(data, wtr, pp, 22)
+	err := gsort.Sort(data, wtr, pp, 22, nil)
 	c.Assert(err, IsNil)
 
 	c.Assert(wtr.String(), Equals, `a	1
@@ -86,7 +86,7 @@ g	1
 	b := make([]byte, 0, 20)
 	wtr := bytes.NewBuffer(b)
 
-	err := gsort.Sort(data, wtr, pp, 22)
+	err := gsort.Sort(data, wtr, pp, 22, nil)
 	c.Assert(err, IsNil)
 
 	c.Assert(wtr.String(), Equals, `g	1
@@ -124,7 +124,7 @@ b	2
 a	3
 g	1`)
 
-	err = gsort.Sort(data, wtr, rev, 22)
+	err = gsort.Sort(data, wtr, rev, 22, nil)
 	c.Assert(err, IsNil)
 
 	c.Assert(wtr.String(), Equals, `a	3

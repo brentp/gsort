@@ -21,7 +21,7 @@ import (
 var DEFAULT_MEM = 2800
 
 // VERSION is the program version number
-const VERSION = "0.1.1"
+const VERSION = "0.1.2"
 
 var FileCols map[string][]int = map[string][]int{
 	"BED": []int{0, 1, 2},
@@ -86,14 +86,7 @@ func sortFnFromCols(cols []int, gf *ggd_utils.GenomeFile, getter endGetter) func
 			ok = false
 		} else {
 			chrom := string(line[s:e])
-			if gf.ReMap != nil && len(gf.ReMap) > 0 {
-				newchrom, ok := gf.ReMap[chrom]
-				if !ok {
-					log.Printf("[gsort] warning! no mapping given for chromosome: %s for line: %s", chrom, line)
-				} else {
-					chrom = newchrom
-				}
-			}
+			// the chromosome name has already been remapped, if necessary.
 			l[0], ok = gf.Order[chrom]
 		}
 		if !ok {
@@ -376,7 +369,7 @@ func main() {
 	sortFn := sortFnFromCols(FileCols[ftype], gf, getter)
 	wtr := bufio.NewWriter(os.Stdout)
 
-	if err := gsort.Sort(brdr, wtr, sortFn, args.Memory); err != nil {
+	if err := gsort.Sort(brdr, wtr, sortFn, args.Memory, gf.ReMap); err != nil {
 		log.Fatal("error from gsort.Sort", err)
 	}
 }
