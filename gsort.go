@@ -13,7 +13,6 @@ package gsort
 
 import (
 	"bufio"
-	"bytes"
 	"compress/flate"
 	"fmt"
 	"io/ioutil"
@@ -102,7 +101,7 @@ func (c *chunk) Pop() interface{} {
 type Processor func(line []byte) []int
 
 // Sort accepts a tab-delimited io.Reader and writes to wtr using prepocess to determine ordering
-func Sort(rdr io.Reader, wtr io.Writer, preprocess Processor, memMB int, chromosomeMappings map[string]string) error {
+func Sort(rdr io.Reader, wtr io.Writer, preprocess Processor, memMB int) error {
 
 	/*
 		f, perr := os.Create("gsort.pprof")
@@ -123,7 +122,7 @@ func Sort(rdr io.Reader, wtr io.Writer, preprocess Processor, memMB int, chromos
 	}
 
 	ch := make(chan [][]byte)
-	go readLines(ch, brdr, memMB, chromosomeMappings)
+	go readLines(ch, brdr, memMB)
 	fileNames := writeChunks(ch, preprocess)
 
 	for _, f := range fileNames {
@@ -137,7 +136,7 @@ func Sort(rdr io.Reader, wtr io.Writer, preprocess Processor, memMB int, chromos
 	return merge(fileNames, bwtr, preprocess)
 }
 
-func readLines(ch chan [][]byte, rdr *bufio.Reader, memMb int, chromosomeMappings map[string]string) {
+func readLines(ch chan [][]byte, rdr *bufio.Reader, memMb int) {
 
 	mem := int(1000000.0 * float64(memMb) * 0.7)
 
@@ -156,17 +155,6 @@ func readLines(ch chan [][]byte, rdr *bufio.Reader, memMb int, chromosomeMapping
 		}
 
 		if len(line) > 0 {
-
-			if chromosomeMappings != nil {
-				i := bytes.IndexRune(line, '\t')
-				chrom := string(line[0:i])
-
-				newChrom, ok := chromosomeMappings[chrom]
-				if !ok {
-					log.Printf("[gsort] WARNING: could not find mapping for chromosom: %s", chrom)
-				}
-				line = append([]byte(newChrom), line[i:]...)
-			}
 			lines = append(lines, line)
 			sum += len(line)
 		}
