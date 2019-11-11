@@ -21,7 +21,7 @@ import (
 var DEFAULT_MEM = 2800
 
 // VERSION is the program version number
-const VERSION = "0.1.2"
+const VERSION = "0.1.3"
 
 var FileCols map[string][]int = map[string][]int{
 	"BED": []int{0, 1, 2},
@@ -94,7 +94,7 @@ func sortFnFromCols(cols []int, gf *ggd_utils.GenomeFile, getter endGetter) func
 				H++
 				return []int{gsort.HEADER_LINE, H}
 			}
-			log.Fatalf("unknown chromosome: %s (known: %v)", line[s:e], gf.Order)
+			log.Fatalf("unknown chromosome: %s (known: %v) in line: %s", line[s:e], gf.Order, string(line))
 		}
 		for k, col := range cols[1:] {
 			i := k + 1

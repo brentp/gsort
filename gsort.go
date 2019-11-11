@@ -162,9 +162,10 @@ func readLines(ch chan [][]byte, rdr *bufio.Reader, memMb int, chromosomeMapping
 
 				newChrom, ok := chromosomeMappings[chrom]
 				if !ok {
-					log.Printf("[gsort] WARNING: could not find mapping for chromosom: %s", chrom)
+					log.Printf("[gsort] WARNING: could not find mapping for chromosome: %s", chrom)
+				} else {
+					line = append([]byte(newChrom), line[i:]...)
 				}
-				line = append([]byte(newChrom), line[i:]...)
 			}
 
 			lines = append(lines, line)
