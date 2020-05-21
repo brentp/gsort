@@ -71,3 +71,27 @@ CHROM1	Cufflinks	exon	15329	16386	.	-	.	Parent=XLOC_228.3
 CHROM1	Cufflinks	exon	15994	16154	.	-	.	Parent=XLOC_228.2"
 
 assert_equal "$(cat $STDOUT_FILE)" "$exp"
+
+
+run check_vcf_like_sort ./gsort_linux_amd64 test.vcf-like.tsv test.vcf-like.genome 
+assert_exit_code 0
+exp="#chrom	pos	ref	alt	strand	gene_symbol	prediction	class	score
+1	12623	A	C	+	DDX11L9	benign	neutral	0.386
+1	12624	T	C	+	DDX11L9	possiblydamaging	deleterious	0.89
+1	12625	G	A	+	DDX11L9	possiblydamaging	deleterious	0.769
+1	12626	C	G	+	DDX11L9	benign	neutral	0
+1	12627	C	G	+	DDX11L9	benign	neutral	0
+12	78791	A	G	+	DKFZp434K1323	possiblydamaging	deleterious	0.713
+12	78792	T	A	+	DKFZp434K1323	possiblydamaging	deleterious	0.932
+12	78793	G	A	+	DKFZp434K1323	possiblydamaging	deleterious	0.851
+12	78794	A	C	+	DKFZp434K1323	possiblydamaging	deleterious	0.895
+Y	59356108	G	T	+	WASH1	benign	neutral	0.026
+Y	59356110	A	G	+	WASH1	benign	neutral	0
+Y	59356111	G	C	+	WASH1	possiblydamaging	deleterious	0.501
+Y	59356112	C	A	+	WASH1	benign	neutral	0.003
+Y	59356113	A	G	+	WASH1	benign	neutral	0.004
+Y	59356113	A	C	+	WASH1	possiblydamaging	deleterious	0.952
+Y	59356114	G	A	+	WASH1	possiblydamaging	deleterious	0.736"
+
+assert_equal "$(cat $STDOUT_FILE)" "$exp"
+
