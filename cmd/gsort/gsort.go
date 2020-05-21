@@ -21,16 +21,17 @@ import (
 var DEFAULT_MEM = 2800
 
 // VERSION is the program version number
-const VERSION = "0.1.3"
+const VERSION = "0.1.4"
 
 var FileCols map[string][]int = map[string][]int{
 	"BED": []int{0, 1, 2},
+	"VCF-LIKE": []int{0, 1, -1},
 	"VCF": []int{0, 1, -1},
 	"GFF": []int{0, 3, -1, 4},
 	"GTF": []int{0, 3, -1, 4},
 }
 
-var CHECK_ORDER = []string{"BED", "GTF"}
+var CHECK_ORDER = []string{"BED", "GTF", "VCF-LIKE"}
 
 var args struct {
 	Path               string `arg:"positional,help:a tab-delimited file to sort"`
@@ -326,7 +327,7 @@ func main() {
 	}
 	var getter endGetter
 
-	if ftype == "VCF" {
+	if ftype == "VCF" || ftype == "VCF-LIKE" {
 		getter = vcfEndGetter
 	} else if args.Parent && (ftype == "GFF" || ftype == "GTF") {
 
