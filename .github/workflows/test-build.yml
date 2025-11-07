@@ -1,0 +1,85 @@
+name: Build Tagged Binaries
+
+on:
+  push:
+    tags:
+      - "*"
+  release:
+    types: [published, prereleased]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ github.ref_name }}
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            ldflags: "-s -w -extldflags '-static'"
+            ext: ""
+          - goos: linux
+            goarch: arm64
+            ldflags: "-s -w -extldflags '-static'"
+            ext: ""
+          - goos: darwin
+            goarch: amd64
+            ldflags: "-s -w"
+            ext: ""
+          - goos: darwin
+            goarch: arm64
+            ldflags: "-s -w"
+            ext: ""
+          - goos: windows
+            goarch: amd64
+            ldflags: "-s -w"
+            ext: ".exe"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Run tests
+        run: go test ./...
+
+      - name: Build ${{ matrix.goos }} ${{ matrix.goarch }} binary
+        run: |
+          CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -trimpath -ldflags "${{ matrix.ldflags }}" -o gsort_${VERSION}_${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.ext }} cmd/gsort/gsort.go
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: gsort-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: gsort_${{ env.VERSION }}_*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ github.ref_name }}
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: gsort-${{ env.VERSION }}-*
+          path: dist
+          merge-multiple: true
+
+      - name: Create GitHub release and upload assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/**
+          generate_release_notes: true
+          name: gsort ${{ env.VERSION }}
+          tag_name: ${{ env.VERSION }}
+          overwrite: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
